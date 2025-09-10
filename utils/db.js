@@ -1,5 +1,5 @@
-/* eslint-disable no-bitwise */
 import { MongoClient } from 'mongodb';
+import crypto from 'crypto';
 
 class DBClient {
   constructor() {
@@ -29,6 +29,31 @@ class DBClient {
     const db = this.client.db();
     const collection = db.collection('files');
     return collection.countDocuments();
+  }
+
+  async userExists(email) {
+    const db = this.client.db();
+    const collection = db.collection('users');
+    const cursor = collection.find({ email });
+    const docs = await cursor.toArray();
+    for (const doc of docs) {
+      if (doc.email === email) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async createUser(email, password) {
+    const db = this.client.db();
+    const collection = db.collection('users');
+    const hash = crypto.createHash('sha1');
+    hash.update(password);
+    const hashedpwd = hash.digest('hex');
+    const result = await collection.insertOne({ email, password: hashedpwd });
+    if (result) {
+      return result.insertedId;
+    }
   }
 }
 
