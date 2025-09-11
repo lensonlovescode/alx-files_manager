@@ -1,4 +1,5 @@
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 class UsersController {
   static async postNew(req, res) {
@@ -14,8 +15,24 @@ class UsersController {
       res.status(400).json({ error: 'Already exists' });
     } else {
       const id = await dbClient.createUser(email, password);
-      res.status(200).json({ id, email });
+      res.status(201).json({ id, email });
     }
+  }
+
+  static async getMe(req, res) {
+    const token = req.get('X-Token');
+    if (!token) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const key = `auth_${token}`;
+    const userID = await redisClient.get(key);
+    if (userID === null) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const email = await dbClient.getCredentialsByID(userID);
+    res.status(200).json({ id: userID, email });
   }
 }
 

@@ -12,6 +12,7 @@ class DBClient {
   isAlive() {
     try {
       this.client.connect();
+      console.log('Connected to MongoDB');
       return true;
     } catch (error) {
       console.error(error);
@@ -54,6 +55,61 @@ class DBClient {
     if (result) {
       return result.insertedId;
     }
+  }
+
+  async authorize(email, password) {
+    const db = this.client.db();
+    const collection = db.collection('users');
+    const cursor = collection.find({});
+    const docs = await cursor.toArray();
+    const hashedpwd = crypto.createHash('sha1').update(password).digest('hex');
+    for (const doc of docs) {
+      if (doc.email === email && doc.password === hashedpwd) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async getEmail(email, password) {
+    const db = this.client.db();
+    const collection = db.collection('users');
+    const cursor = collection.find({});
+    const docs = await cursor.toArray();
+    const hashedpwd = crypto.createHash('sha1').update(password).digest('hex');
+    for (const doc of docs) {
+      if (doc.email === email && doc.password === hashedpwd) {
+        return doc._id;
+      }
+    }
+    return null;
+  }
+
+  async getID(email, password) {
+    const db = this.client.db();
+    const collection = db.collection('users');
+    const cursor = collection.find({});
+    const docs = await cursor.toArray();
+    const hashedpwd = crypto.createHash('sha1').update(password).digest('hex');
+    for (const doc of docs) {
+      if (doc.email === email && doc.password === hashedpwd) {
+        return doc._id;
+      }
+    }
+    return null;
+  }
+
+  async getCredentialsByID(userID) {
+    const db = this.client.db();
+    const collection = db.collection('users');
+    const cursor = collection.find();
+    const docs = await cursor.toArray();
+    for (const doc of docs) {
+      if (doc._id.toString() === userID) {
+        return doc.email;
+      }
+    }
+    return null;
   }
 }
 
